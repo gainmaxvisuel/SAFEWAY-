@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Portefeuille</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+overflow-x:hidden;
+}
+
+/* =======================
+   SOLDE (PLUS GRAND)
+======================= */
+.top-card{
+margin:20px;
+padding:35px;
+background:#111;
+border-radius:20px;
+border:1px solid #222;
+}
+
+.top-card h2{
+margin:0;
+color:#ff0000;
+font-size:22px;
+}
+
+.top-card p{
+margin-top:15px;
+font-size:34px;
+font-weight:bold;
+}
+
+/* =======================
+   ACTIONS
+======================= */
+.actions{
+display:flex;
+gap:12px;
+padding:0 20px;
+margin-top:10px;
+}
+
+.btn{
+flex:1;
+padding:18px;
+border-radius:18px;
+text-align:center;
+font-weight:bold;
+cursor:pointer;
+border:1px solid #222;
+font-size:16px;
+}
+
+.deposit{
+background:#ff0000;
+color:#fff;
+}
+
+.withdraw{
+background:#111;
+color:#fff;
+}
+
+/* =======================
+   HISTORIQUE (MODIFIÉ)
+======================= */
+.history{
+margin:15px 20px;
+padding:18px;
+background:#111;
+border-radius:22px; /* 👈 coins plus arrondis */
+border:1px solid #222;
+text-align:center;
+font-weight:bold;
+font-size:16px;
+cursor:pointer;
+}
+
+.history span{
+color:#ff0000;
+font-size:18px;
+margin-left:5px;
+}
+
+/* =======================
+   GRID
+======================= */
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;
+padding:15px 20px;
+margin-bottom:80px;
+}
+
+.box{
+background:#111;
+border-radius:18px;
+padding:18px;
+border:1px solid #222;
+}
+
+.box h3{
+margin:0;
+color:#ff0000;
+font-size:22px;
+}
+
+.box p{
+font-size:13px;
+color:#aaa;
+margin-top:8px;
+}
+
+/* =======================
+   MENU FIXE (INCHANGÉ)
+======================= */
+.menu{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+align-items:center;
+padding:14px 0;
+border-top:1px solid #222;
+}
+
+.menu-item{
+text-align:center;
+font-size:14px;
+color:#777;
+flex:1;
+cursor:pointer;
+}
+
+.menu-item div{
+font-size:22px;
+margin-bottom:3px;
+color:#aaa;
+}
+
+.menu-item.active{
+color:#ff0000;
+}
+
+.menu-item.active div{
+color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SOLDE -->
+<div class="top-card">
+<h2>💼 Solde disponible</h2>
+<p id="balance">0 FCFA</p>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+<div class="btn deposit" onclick="location.href='deposit.html'">＋ Dépôt</div>
+<div class="btn withdraw" onclick="location.href='withdraw.html'">－ Retrait</div>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="history" onclick="location.href='transactions.html'">
+Historique des transactions <span>➜</span>
+</div>
+
+<!-- GRID -->
+<div class="grid">
+
+<div class="box">
+<h3 id="totalTx">0 FCFA</h3>
+<p>Total transactions</p>
+</div>
+
+<div class="box">
+<h3 id="todayIncome">0 FCFA</h3>
+<p>Revenu aujourd’hui</p>
+</div>
+
+<div class="box">
+<h3 id="totalDeposit">0 FCFA</h3>
+<p>Total dépôt</p>
+</div>
+
+<div class="box">
+<h3 id="totalWithdraw">0 FCFA</h3>
+<p>Total retrait</p>
+</div>
+
+</div>
+
+<!-- MENU -->
+<div class="menu">
+
+<div class="menu-item" onclick="location.href='home.html'">
+<div>⌂</div>Accueil
+</div>
+
+<div class="menu-item" onclick="location.href='product.html'">
+<div>▣</div>Produit
+</div>
+
+<div class="menu-item active">
+<div>◧</div>Portefeuille
+</div>
+
+<div class="menu-item" onclick="location.href='account.html'">
+<div>○</div>Compte
+</div>
+
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let userId = localStorage.getItem("user_id");
+
+async function loadWallet(){
+
+if(!userId) return;
+
+/* BALANCE */
+const { data: user } = await client
+.from("users")
+.select("balance")
+.eq("id", userId)
+.single();
+
+document.getElementById("balance").innerText =
+(user?.balance || 0) + " FCFA";
+
+
+/* TRANSACTIONS */
+const { data: tx } = await client
+.from("transactions")
+.select("*")
+.eq("user_id", userId);
+
+let totalTx = 0;
+let todayIncome = 0;
+let totalDeposit = 0;
+let totalWithdraw = 0;
+
+tx.forEach(t => {
+
+totalTx += t.amount || 0;
+
+if(t.type === "daily_income"){
+todayIncome += t.amount;
+}
+
+if(t.type === "deposit"){
+totalDeposit += t.amount;
+}
+
+if(t.type === "withdraw"){
+totalWithdraw += t.amount;
+}
+
+});
+
+/* DISPLAY */
+document.getElementById("totalTx").innerText = totalTx + " FCFA";
+document.getElementById("todayIncome").innerText = todayIncome + " FCFA";
+document.getElementById("totalDeposit").innerText = totalDeposit + " FCFA";
+document.getElementById("totalWithdraw").innerText = totalWithdraw + " FCFA";
+
+}
+
+loadWallet();
+
+</script>
+
+</body>
+</html>

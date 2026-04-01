@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Transactions</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+}
+
+/* HEADER */
+.header{
+margin:15px;
+padding:18px;
+background:#111;
+border-radius:18px;
+border:1px solid #222;
+position:relative;
+}
+
+/* RETOUR */
+.back{
+position:absolute;
+left:15px;
+top:15px;
+font-size:22px;
+cursor:pointer;
+color:#fff;
+background:#1a1a1a;
+padding:6px 10px;
+border-radius:10px;
+}
+
+.header h2{
+margin:0;
+color:#ff0000;
+text-align:center;
+font-size:18px;
+}
+
+.header p{
+margin-top:6px;
+color:#aaa;
+font-size:13px;
+text-align:center;
+}
+
+/* FILTRES */
+.filters{
+display:flex;
+gap:10px;
+padding:0 15px;
+margin-top:10px;
+}
+
+.filter{
+flex:1;
+padding:10px;
+text-align:center;
+border-radius:12px;
+background:#111;
+border:1px solid #222;
+cursor:pointer;
+font-size:13px;
+color:#aaa;
+}
+
+.filter.active{
+background:#ff0000;
+color:#fff;
+}
+
+/* LISTE */
+.list{
+margin:15px;
+margin-bottom:90px;
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+/* CARD */
+.card{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:15px;
+position:relative;
+}
+
+/* STATUS */
+.status{
+position:absolute;
+top:10px;
+right:10px;
+font-size:11px;
+padding:4px 8px;
+border-radius:8px;
+font-weight:bold;
+}
+
+/* STATUTS DB */
+.completed{
+background:#0f5132;
+color:#00ff88;
+}
+
+.pending{
+background:#5a3b00;
+color:#ffcc00;
+}
+
+.failed{
+background:#5a1a1a;
+color:#ff4444;
+}
+
+/* TEXTES PLUS PRO */
+.type{
+font-weight:bold;
+font-size:16px;
+margin-bottom:6px;
+text-transform:capitalize;
+}
+
+.desc{
+font-size:12px;
+color:#aaa;
+margin-bottom:6px;
+line-height:1.4;
+}
+
+.amount{
+font-size:17px;
+font-weight:bold;
+margin-bottom:6px;
+}
+
+.date{
+font-size:12px;
+color:#777;
+}
+
+/* MENU BAS */
+.menu{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+align-items:center;
+padding:14px 0;
+border-top:1px solid #222;
+}
+
+.menu-item{
+text-align:center;
+font-size:14px;
+color:#777;
+flex:1;
+cursor:pointer;
+}
+
+.menu-item div{
+font-size:22px;
+margin-bottom:3px;
+color:#aaa;
+}
+
+.menu-item.active{
+color:#ff0000;
+}
+
+.menu-item.active div{
+color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+
+<div class="back" onclick="goBack()">←</div>
+
+<h2>Transactions</h2>
+<p>Suivi complet de toutes vos opérations financières</p>
+
+</div>
+
+<!-- FILTRES -->
+<div class="filters">
+<div class="filter active" onclick="setFilter('all', event)">Tout</div>
+<div class="filter" onclick="setFilter('deposit', event)">Dépôts</div>
+<div class="filter" onclick="setFilter('withdrawal', event)">Retraits</div>
+<div class="filter" onclick="setFilter('other', event)">Autres</div>
+</div>
+
+<!-- LISTE -->
+<div class="list" id="list"></div>
+
+<script>
+
+/* SUPABASE */
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let userId = localStorage.getItem("user_id");
+let allTransactions = [];
+let currentFilter = "all";
+
+/* RETOUR */
+function goBack(){
+window.location.href = "wallet.html";
+}
+
+/* LOAD */
+async function loadTransactions(){
+
+if(!userId) return;
+
+const { data } = await client
+.from("transactions")
+.select("*")
+.eq("user_id", userId)
+.order("created_at", { ascending:false });
+
+allTransactions = data || [];
+render();
+}
+
+/* FILTRE */
+function setFilter(type, e){
+
+currentFilter = type;
+
+document.querySelectorAll(".filter")
+.forEach(f => f.classList.remove("active"));
+
+e.target.classList.add("active");
+
+render();
+}
+
+/* RENDER */
+function render(){
+
+const list = document.getElementById("list");
+list.innerHTML = "";
+
+let filtered = allTransactions;
+
+/* FILTRES */
+if(currentFilter === "deposit"){
+filtered = allTransactions.filter(t => t.type === "deposit");
+}
+else if(currentFilter === "withdrawal"){
+filtered = allTransactions.filter(t => t.type === "withdrawal");
+}
+else if(currentFilter === "other"){
+filtered = allTransactions.filter(t =>
+!["deposit","withdrawal"].includes(t.type)
+);
+}
+
+/* AFFICHAGE */
+filtered.forEach(t => {
+
+let dateObj = new Date(t.created_at);
+let date = dateObj.toLocaleDateString();
+let time = dateObj.toLocaleTimeString();
+
+/* STATUS DB */
+let statusClass = "pending";
+if(t.status === "completed") statusClass = "completed";
+if(t.status === "failed" || t.status === "rejected") statusClass = "failed";
+
+list.innerHTML += `
+<div class="card">
+
+  <div class="status ${statusClass}">
+    ${t.status}
+  </div>
+
+  <div class="type">${t.type}</div>
+
+  <div class="desc">${t.description || "Aucune description"}</div>
+
+  <div class="amount">${t.amount} FCFA</div>
+
+  <div class="date">${date} à ${time}</div>
+
+</div>
+`;
+
+});
+
+}
+
+/* INIT */
+loadTransactions();
+
+</script>
+
+</body>
+</html>

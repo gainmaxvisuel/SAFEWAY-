@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Accueil</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+overflow-x:hidden;
+}
+
+/* SLIDER */
+.slider{width:92%;height:180px;margin:15px auto;border-radius:20px;overflow:hidden;position:relative;}
+.slide{width:100%;height:100%;position:absolute;background-size:cover;background-position:center;transition:all 1s ease;opacity:0;transform:scale(1.2);}
+.slide.active{opacity:1;transform:scale(1);}
+.flash{position:absolute;width:100%;height:100%;background:#000;opacity:0;}
+.slider-text{position:absolute;bottom:10px;left:10px;right:10px;background:rgba(0,0,0,0.6);padding:10px;border-radius:10px;font-size:13px;border:1px solid #ff0000;}
+
+/* CARDS */
+.cards{display:flex;gap:10px;padding:0 10px;}
+.card{flex:1;background:#111;padding:15px;border-radius:15px;border:1px solid #222;}
+.card h3{color:#ff0000;}
+
+/* REFRESH */
+.refresh{margin:10px;padding:15px;background:#111;border-radius:15px;text-align:center;cursor:pointer;border:1px solid #222;}
+
+/* ACTIONS */
+.actions{display:flex;gap:10px;padding:10px;}
+.btn{flex:1;height:80px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;cursor:pointer;border:1px solid #222;}
+.deposit{background:#ff0000;color:#fff;}
+.withdraw{background:#111;color:#fff;}
+
+/* MENU FIXE */
+.menu{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+align-items:center;
+padding:14px 0;
+border-top:1px solid #222;
+}
+
+.menu-item{
+text-align:center;
+font-size:14px;
+color:#777;
+flex:1;
+cursor:pointer;
+}
+
+.menu-item div{
+font-size:22px;
+color:#aaa;
+margin-bottom:3px;
+}
+
+.menu-item.active{
+color:#ff0000;
+}
+.menu-item.active div{
+color:#ff0000;
+}
+
+/* SUPPORT */
+.support{
+position:fixed;
+right:15px;
+bottom:100px;
+width:55px;
+height:55px;
+background:#ff0000;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+}
+
+.popup{
+position:fixed;
+bottom:170px;
+right:15px;
+background:#111;
+padding:15px;
+border-radius:15px;
+display:none;
+border:1px solid #222;
+}
+
+/* ABOUT SECTION */
+.about-section{
+width:95%;
+margin:25px auto 120px auto;
+}
+
+.about-block{
+display:flex;
+gap:15px;
+background:#111;
+padding:15px;
+border-radius:15px;
+border:1px solid #222;
+align-items:flex-start;
+}
+
+.about-img{
+width:90px;
+height:90px;
+object-fit:cover;
+border-radius:10px;
+border:1px solid #333;
+}
+
+.about-text{
+flex:1;
+height:120px;
+overflow-y:auto;
+padding-right:8px;
+}
+
+.about-text h3{
+margin:0;
+color:#ff0000;
+font-size:16px;
+}
+
+.about-text p{
+font-size:13px;
+color:#ccc;
+line-height:1.6;
+}
+
+.about-text::-webkit-scrollbar{
+width:4px;
+}
+.about-text::-webkit-scrollbar-thumb{
+background:#ff0000;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SLIDER -->
+<div class="slider">
+<div class="flash" id="flash"></div>
+
+<div class="slide active" id="s1" style="background-image:url('https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a')">
+<div class="slider-text">SAFEWAY - Investissement sécurisé</div>
+</div>
+
+<div class="slide" id="s2" style="background-image:url('https://images.unsplash.com/photo-1556761175-4b46a572b786')">
+<div class="slider-text">SAFEWAY - Développez vos revenus</div>
+</div>
+
+<div class="slide" id="s3" style="background-image:url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43')">
+<div class="slider-text">SAFEWAY - Croissance financière stable</div>
+</div>
+
+</div>
+
+<!-- CARDS -->
+<div class="cards">
+<div class="card">💼 Solde <h3 id="solde">0 FCFA</h3></div>
+<div class="card">💰 Commission <h3 id="commission">0 FCFA</h3></div>
+</div>
+
+<div class="refresh" onclick="loadData()">🔄 Actualiser</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+<div class="btn deposit" onclick="location.href='deposit.html'">＋ Dépôt</div>
+<div class="btn withdraw" onclick="location.href='withdraw.html'">－ Retrait</div>
+</div>
+
+<!-- ABOUT SECTION -->
+<div class="about-section">
+
+<div class="about-block">
+
+<img class="about-img"
+src="https://cdn.worldvectorlogo.com/logos/safeway-6.svg">
+
+<div class="about-text">
+<h3>À propos de SAFEWAY-INVEST</h3>
+
+<p>
+SAFEWAY-INVEST est une plateforme d’investissement moderne conçue pour offrir une expérience simple, sécurisée et accessible à tous les utilisateurs. Elle permet de générer des revenus progressifs grâce à un système structuré et transparent.
+
+La plateforme met à disposition des plans d’investissement adaptés à tous les budgets, permettant à chaque utilisateur de commencer petit et d’évoluer progressivement.
+
+Notre système repose sur la sécurité des transactions, la transparence des opérations et un accompagnement continu des utilisateurs.
+
+SAFEWAY-INVEST offre également un support actif pour aider les membres dans leurs dépôts, retraits et gestion de compte.
+
+Nous croyons que l’investissement doit être simple, rapide et accessible à tous sans complication technique.
+
+Notre objectif est de permettre à chaque utilisateur de construire un revenu stable et durable grâce à notre système évolutif.
+
+La plateforme continue d’évoluer pour offrir plus de fonctionnalités et améliorer l’expérience utilisateur chaque jour.
+</p>
+
+</div>
+</div>
+</div>
+
+<!-- MENU FIXE -->
+<div class="menu">
+
+<div class="menu-item active" onclick="location.href='home.html'">
+<div>⌂</div>Accueil
+</div>
+
+<div class="menu-item" onclick="location.href='product.html'">
+<div>▣</div>Produit
+</div>
+
+<div class="menu-item" onclick="location.href='wallet.html'">
+<div>◧</div>Portefeuille
+</div>
+
+<div class="menu-item" onclick="location.href='account.html'">
+<div>○</div>Compte
+</div>
+
+</div>
+
+<!-- SUPPORT -->
+<div class="support" onclick="toggleSupport()">💬</div>
+
+<div class="popup" id="supportBox">
+<div onclick="window.open('https://t.me/Melissajoan1')">Support 1</div>
+<div onclick="window.open('https://t.me/GAININVEST2')">Support 2</div>
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+async function loadData(){
+
+let userId = localStorage.getItem("user_id");
+if(!userId) return;
+
+const { data } = await client
+.from("users")
+.select("balance")
+.eq("id", userId)
+.single();
+
+if(data){
+document.getElementById("solde").innerText = data.balance + " FCFA";
+}
+}
+
+function toggleSupport(){
+let box = document.getElementById("supportBox");
+box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+/* SLIDER */
+let slides = [s1, s2, s3];
+let i = 0;
+
+setInterval(()=>{
+flash.style.opacity=0.8;
+
+setTimeout(()=>{
+flash.style.opacity=0;
+
+slides[i].classList.remove("active");
+i = (i+1)%slides.length;
+slides[i].classList.add("active");
+
+},200);
+
+},4000);
+
+loadData();
+
+</script>
+
+</body>
+</html>

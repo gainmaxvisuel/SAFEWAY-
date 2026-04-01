@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes Produits</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+background:#0a0a0a;
+color:#fff;
+font-family:Arial;
+}
+
+/* HEADER */
+.header{
+display:flex;
+align-items:center;
+padding:15px;
+}
+
+.back{
+font-size:22px;
+cursor:pointer;
+}
+
+h2{
+flex:1;
+text-align:center;
+color:#ff0000;
+margin:0;
+}
+
+/* CONTAINER */
+.container{
+padding:15px;
+}
+
+/* CARD VIP */
+.card{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:15px;
+margin-bottom:15px;
+position:relative;
+overflow:hidden;
+}
+
+/* BADGE STATUT (ÉPINGLÉ EN HAUT) */
+.badge{
+position:absolute;
+top:10px;
+right:10px;
+padding:5px 10px;
+font-size:12px;
+border-radius:20px;
+font-weight:bold;
+}
+
+.active{
+background:green;
+color:white;
+}
+
+.expired{
+background:#444;
+color:#aaa;
+}
+
+/* IMAGE VIP (si tu ajoutes plus tard) */
+.vip-img{
+width:100%;
+height:140px;
+object-fit:cover;
+border-radius:12px;
+margin-bottom:10px;
+}
+
+/* TEXT */
+.title{
+font-size:18px;
+font-weight:bold;
+color:#ff0000;
+margin-top:10px;
+}
+
+.row{
+margin-top:8px;
+font-size:14px;
+color:#ccc;
+}
+
+/* EMPTY */
+.empty{
+text-align:center;
+margin-top:40px;
+color:#888;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+<div class="back" onclick="goBack()">⬅</div>
+<h2>Mes Produits</h2>
+</div>
+
+<div class="container" id="list"></div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+function goBack(){
+window.location.href = "wallet.html";
+}
+
+function formatDate(date){
+let d = new Date(date);
+return d.toLocaleDateString();
+}
+
+async function loadProducts(){
+
+let user_id = localStorage.getItem("user_id");
+
+if(!user_id){
+alert("Non connecté");
+return;
+}
+
+const { data, error } = await supabaseClient
+.from("user_vips")
+.select(`
+id,
+start_date,
+end_date,
+vip_plans(name, daily_income)
+`)
+.eq("user_id", user_id)
+.order("start_date", { ascending:false });
+
+if(error){
+alert(error.message);
+return;
+}
+
+let container = document.getElementById("list");
+container.innerHTML = "";
+
+if(!data || data.length === 0){
+container.innerHTML = "<div class='empty'>Aucun produit acheté</div>";
+return;
+}
+
+data.forEach(item => {
+
+let now = new Date();
+let end = new Date(item.end_date);
+
+// STATUT
+let isActive = end >= now;
+let statusText = isActive ? "EN COURS" : "EXPIRÉ";
+
+let card = document.createElement("div");
+card.className = "card";
+
+card.innerHTML = `
+
+<div class="badge ${isActive ? "active" : "expired"}">
+${statusText}
+</div>
+
+<div class="title">${item.vip_plans.name}</div>
+
+<div class="row">💰 Gain / jour : ${item.vip_plans.daily_income} FCFA</div>
+<div class="row">📅 Début : ${formatDate(item.start_date)}</div>
+<div class="row">⏳ Fin : ${formatDate(item.end_date)}</div>
+
+`;
+
+container.appendChild(card);
+
+});
+
+}
+
+loadProducts();
+
+</script>
+
+</body>
+</html>

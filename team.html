@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Team</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+}
+
+.header{
+display:flex;
+align-items:center;
+gap:10px;
+padding:15px;
+}
+
+.back{
+font-size:22px;
+cursor:pointer;
+color:#ff0000;
+}
+
+.title{
+font-size:18px;
+font-weight:bold;
+}
+
+.container{
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:18px;
+}
+
+.label{
+font-size:14px;
+color:#aaa;
+}
+
+.box{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:18px;
+word-break:break-all;
+font-size:15px;
+}
+
+.btn{
+margin-top:8px;
+padding:12px;
+text-align:center;
+border-radius:12px;
+background:#ff0000;
+cursor:pointer;
+}
+
+.btn.whatsapp{
+background:#25D366;
+}
+
+.stats{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+.stat{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:18px;
+text-align:center;
+}
+
+.stat h3{
+margin:0;
+color:#ff0000;
+font-size:20px;
+}
+
+.stat p{
+margin:5px 0 0;
+font-size:13px;
+color:#aaa;
+}
+
+.commission{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:18px;
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+.level{
+display:flex;
+justify-content:space-between;
+font-size:14px;
+color:#ccc;
+}
+
+.percent{
+color:#ff0000;
+font-weight:bold;
+}
+
+.info{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:18px;
+font-size:14px;
+color:#bbb;
+line-height:1.6;
+}
+
+.toast{
+position:fixed;
+top:-60px;
+left:50%;
+transform:translateX(-50%);
+background:#111;
+border:1px solid #222;
+padding:12px 20px;
+border-radius:12px;
+transition:0.4s;
+}
+
+.toast.show{
+top:20px;
+border-color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="toast" class="toast">Copié</div>
+
+<!-- HEADER -->
+<div class="header">
+<div class="back" onclick="location.href='account.html'">←</div>
+<div class="title">Inviter des amis</div>
+</div>
+
+<div class="container">
+
+<!-- CODE -->
+<div>
+<div class="label">Votre code de parrainage</div>
+<div class="box" id="refCode"></div>
+</div>
+
+<!-- LINK -->
+<div>
+<div class="label">Lien d’invitation</div>
+<div class="box" id="refLink"></div>
+
+<div class="btn" onclick="copyLink()">Copier le lien</div>
+<div class="btn whatsapp" onclick="shareWhatsApp()">Partager WhatsApp</div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+
+<div class="stat">
+<h3 id="totalRefs">0</h3>
+<p>Invités</p>
+</div>
+
+<div class="stat">
+<h3 id="totalCom">0</h3>
+<p>Commissions</p>
+</div>
+
+</div>
+
+<!-- NIVEAUX -->
+<div class="commission">
+
+<div class="label">Commissions par niveau</div>
+
+<div class="level">
+<span>Niveau 1 (31%)</span>
+<span id="lvl1Count">0</span>
+</div>
+
+<div class="level">
+<span>Niveau 2 (3%)</span>
+<span id="lvl2Count">0</span>
+</div>
+
+<div class="level">
+<span>Niveau 3 (1%)</span>
+<span id="lvl3Count">0</span>
+</div>
+
+</div>
+
+<!-- INFO -->
+<div class="info">
+Invitez vos amis et gagnez des commissions sur 3 niveaux.
+
+Plus votre réseau grandit, plus vos revenus augmentent automatiquement.
+
+Partagez votre lien et commencez à gagner dès aujourd’hui.
+</div>
+
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let inviteLink = "";
+let userId = localStorage.getItem("user_id");
+
+async function loadData(){
+
+if(!userId) return;
+
+/* USER */
+const { data:user } = await client
+.from("users")
+.select("referral_code")
+.eq("id", userId)
+.single();
+
+if(user){
+inviteLink = "https://safeway-chis.vercel.app/?ref=" + user.referral_code;
+
+document.getElementById("refCode").innerText = user.referral_code;
+document.getElementById("refLink").innerText = inviteLink;
+}
+
+/* USERS */
+const { data:allUsers } = await client
+.from("users")
+.select("id, referred_by");
+
+/* COMMISSIONS */
+const { data:coms } = await client
+.from("commissions")
+.select("amount, user_id");
+
+/* LEVELS */
+let lvl1 = allUsers.filter(u => u.referred_by === userId);
+
+let lvl2 = allUsers.filter(u =>
+lvl1.some(l1 => l1.id === u.referred_by)
+);
+
+let lvl3 = allUsers.filter(u =>
+lvl2.some(l2 => l2.id === u.referred_by)
+);
+
+/* COMMISSIONS */
+let c1 = 0, c2 = 0, c3 = 0;
+
+coms.forEach(c => {
+
+if(c.user_id === userId){
+c1 += c.amount * 0.31;
+c2 += c.amount * 0.03;
+c3 += c.amount * 0.01;
+}
+
+});
+
+/* UI */
+document.getElementById("totalRefs").innerText = lvl1.length;
+
+let total = c1 + c2 + c3;
+document.getElementById("totalCom").innerText = Math.round(total) + " FCFA";
+
+document.getElementById("lvl1Count").innerText =
+lvl1.length + " personnes | " + Math.round(c1) + " FCFA";
+
+document.getElementById("lvl2Count").innerText =
+lvl2.length + " personnes | " + Math.round(c2) + " FCFA";
+
+document.getElementById("lvl3Count").innerText =
+lvl3.length + " personnes | " + Math.round(c3) + " FCFA";
+
+}
+
+/* COPY */
+function copyLink(){
+navigator.clipboard.writeText(inviteLink);
+showToast("Lien copié");
+}
+
+/* WHATSAPP */
+function shareWhatsApp(){
+let msg = "Rejoins SAFEWAY et gagne de l'argent 👇\n" + inviteLink;
+window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+/* TOAST */
+function showToast(text){
+let t = document.getElementById("toast");
+t.innerText = text;
+t.classList.add("show");
+
+setTimeout(()=>{
+t.classList.remove("show");
+},2500);
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>

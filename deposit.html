@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Dépôt</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+margin:0;
+background:#000;
+color:#fff;
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+.container{
+flex:1;
+display:flex;
+flex-direction:column;
+justify-content:center;
+padding:20px;
+max-width:400px;
+margin:auto;
+width:100%;
+}
+
+h2{
+text-align:center;
+color:#ff0000;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+background:#111;
+border:1px solid #333;
+border-radius:10px;
+color:#fff;
+outline:none;
+}
+
+input:focus{
+border:1px solid #ff0000;
+}
+
+.dropdown{
+position:relative;
+margin-top:10px;
+}
+
+.dropdown-btn{
+background:#111;
+border:1px solid #333;
+padding:14px;
+border-radius:12px;
+color:#fff;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:pointer;
+}
+
+.dropdown-content{
+display:none;
+position:absolute;
+width:100%;
+background:#111;
+border:1px solid #333;
+border-radius:12px;
+margin-top:5px;
+z-index:999;
+max-height:220px;
+overflow-y:auto;
+}
+
+.item{
+padding:12px;
+cursor:pointer;
+border-bottom:1px solid #222;
+}
+
+.item:hover{
+background:#ff0000;
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:20px;
+background:#ff0000;
+border:none;
+border-radius:10px;
+font-weight:bold;
+color:#fff;
+cursor:pointer;
+}
+
+button:hover{
+background:#cc0000;
+}
+
+.error{
+color:#ff4d4d;
+font-size:13px;
+text-align:center;
+margin-top:10px;
+}
+
+.popup{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.95);
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+.popup-box{
+background:#111;
+padding:25px;
+border-radius:12px;
+text-align:center;
+border:1px solid #ff0000;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>💰 Dépôt SAFEWAY</h2>
+
+<!-- PAYS -->
+<div class="dropdown">
+<div class="dropdown-btn" onclick="toggleDropdown()">
+<span id="selectedCountry">Choisir un pays</span>
+<span>▼</span>
+</div>
+
+<div class="dropdown-content" id="dropdownList">
+<div class="item" onclick="selectCountry('+226')">Burkina Faso</div>
+<div class="item" onclick="selectCountry('+223')">Mali</div>
+<div class="item" onclick="selectCountry('+227')">Niger</div>
+<div class="item" onclick="selectCountry('+228')">Togo</div>
+<div class="item" onclick="selectCountry('+229')">Bénin</div>
+<div class="item" onclick="selectCountry('+225')">Côte d’Ivoire</div>
+<div class="item" onclick="selectCountry('+237')">Cameroun</div>
+<div class="item" onclick="selectCountry('+221')">Sénégal</div>
+</div>
+</div>
+
+<!-- PHONE -->
+<input id="phone" placeholder="Numéro de téléphone">
+
+<!-- AMOUNT -->
+<input id="amount" placeholder="Montant dépôt">
+
+<div class="error" id="msg"></div>
+
+<button id="btn" onclick="createDeposit()">Valider le dépôt</button>
+
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h2 style="color:#ff0000;">✔ Succès</h2>
+<p>Dépôt envoyé avec succès</p>
+</div>
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let selectedCountryCode = "";
+
+function toggleDropdown(){
+let list = document.getElementById("dropdownList");
+list.style.display = list.style.display === "block" ? "none" : "block";
+}
+
+function selectCountry(code){
+selectedCountryCode = code;
+document.getElementById("selectedCountry").innerText = code;
+document.getElementById("dropdownList").style.display = "none";
+}
+
+async function createDeposit(){
+
+let user_id = localStorage.getItem("user_id");
+let phone = document.getElementById("phone").value;
+let amount = parseInt(document.getElementById("amount").value);
+
+let msg = document.getElementById("msg");
+let btn = document.getElementById("btn");
+
+msg.innerText = "";
+
+if(!user_id){
+msg.innerText = "Utilisateur non connecté";
+return;
+}
+
+if(!selectedCountryCode || !phone || !amount){
+msg.innerText = "Remplis tous les champs";
+return;
+}
+
+btn.disabled = true;
+btn.innerText = "Traitement...";
+
+let full_phone = selectedCountryCode + phone;
+
+try{
+
+// ✅ IMPORTANT : UTILISE TA FONCTION SQL
+const { error } = await client.rpc("create_deposit", {
+  p_user_id: user_id,
+  p_country_code: selectedCountryCode,
+  p_phone: full_phone,
+  p_amount: amount
+});
+
+if(error) throw error;
+
+// SUCCESS
+document.getElementById("popup").style.display = "flex";
+
+setTimeout(()=>{
+window.location.href = "https://leekpay.me/safeway-depot";
+},1500);
+
+}catch(err){
+
+msg.innerText = err.message;
+btn.disabled = false;
+btn.innerText = "Valider le dépôt";
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

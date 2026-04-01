@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY-INVEST | Connexion</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+margin:0;
+background:#000;
+color:#fff;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.container{
+width:100%;
+max-width:420px;
+padding:20px;
+}
+
+h1{
+text-align:center;
+color:#ff0000;
+margin-bottom:10px;
+}
+
+h3{
+text-align:center;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+border-radius:14px;
+border:1px solid #333;
+background:#111;
+color:#fff;
+outline:none;
+}
+
+input:focus{
+border:1px solid #ff0000;
+}
+
+/* PASSWORD BOX */
+.box{
+position:relative;
+}
+
+.eye{
+position:absolute;
+right:12px;
+top:55%;
+transform:translateY(-50%);
+cursor:pointer;
+color:#ff0000;
+font-size:18px;
+}
+
+/* BUTTON */
+button{
+width:100%;
+padding:14px;
+margin-top:20px;
+border:none;
+border-radius:14px;
+background:#ff0000;
+color:#fff;
+font-weight:bold;
+cursor:pointer;
+}
+
+button:hover{
+background:#cc0000;
+}
+
+/* ERROR */
+.error{
+text-align:center;
+color:#ff4d4d;
+margin-top:10px;
+font-size:14px;
+}
+
+/* LINK */
+.link{
+text-align:center;
+margin-top:12px;
+}
+
+.link a{
+color:#ff0000;
+text-decoration:none;
+font-weight:bold;
+}
+
+/* DROPDOWN */
+.dropdown{
+margin-top:10px;
+position:relative;
+}
+
+.dropdown-btn{
+padding:14px;
+border-radius:14px;
+background:#111;
+border:1px solid #333;
+cursor:pointer;
+display:flex;
+justify-content:space-between;
+}
+
+.dropdown-list{
+display:none;
+position:absolute;
+width:100%;
+background:#111;
+border-radius:14px;
+border:1px solid #333;
+margin-top:5px;
+z-index:10;
+max-height:220px;
+overflow-y:auto;
+}
+
+.item{
+padding:12px;
+border-bottom:1px solid #222;
+cursor:pointer;
+}
+
+.item:hover{
+background:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>SAFEWAY</h1>
+<h3>Connexion</h3>
+
+<!-- PAYS -->
+<div class="dropdown">
+<div class="dropdown-btn" onclick="toggle()">
+<span id="countryText">Sélection code pays</span>
+<span>▼</span>
+</div>
+
+<div class="dropdown-list" id="list">
+
+<div class="item" onclick="setCountry('+225','Côte d’Ivoire')">🇨🇮 Côte d’Ivoire (+225)</div>
+<div class="item" onclick="setCountry('+221','Sénégal')">🇸🇳 Sénégal (+221)</div>
+<div class="item" onclick="setCountry('+237','Cameroun')">🇨🇲 Cameroun (+237)</div>
+<div class="item" onclick="setCountry('+229','Bénin')">🇧🇯 Bénin (+229)</div>
+<div class="item" onclick="setCountry('+223','Mali')">🇲🇱 Mali (+223)</div>
+<div class="item" onclick="setCountry('+226','Burkina Faso')">🇧🇫 Burkina Faso (+226)</div>
+<div class="item" onclick="setCountry('+228','Togo')">🇹🇬 Togo (+228)</div>
+
+</div>
+</div>
+
+<input id="phone" placeholder="Numéro de téléphone">
+
+<!-- PASSWORD + OEIL -->
+<div class="box">
+<input type="password" id="password" placeholder="Mot de passe">
+<span class="eye" onclick="togglePass()">👁</span>
+</div>
+
+<button onclick="login()">Se connecter</button>
+
+<div class="error" id="msg"></div>
+
+<!-- LIEN EN BAS -->
+<div class="link">
+Pas de compte ?
+<a href="index.html">Créer un compte</a>
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let countryCode = "";
+
+/* DROPDOWN */
+function toggle(){
+let list = document.getElementById("list");
+list.style.display = list.style.display === "block" ? "none" : "block";
+}
+
+function setCountry(code, name){
+countryCode = code;
+document.getElementById("countryText").innerText = name + " (" + code + ")";
+document.getElementById("list").style.display = "none";
+}
+
+/* PASSWORD OEIL */
+function togglePass(){
+let input = document.getElementById("password");
+input.type = input.type === "password" ? "text" : "password";
+}
+
+/* LOGIN */
+async function login(){
+
+let phone = document.getElementById("phone").value.trim();
+let password = document.getElementById("password").value;
+let msg = document.getElementById("msg");
+
+msg.innerText = "";
+
+if(!countryCode || !phone || !password){
+msg.innerText = "Remplis tous les champs";
+return;
+}
+
+try{
+
+const { data, error } = await supabaseClient
+.from("users")
+.select("id")
+.eq("country_code", countryCode)
+.eq("phone", phone)
+.eq("password", password)
+.single();
+
+if(error || !data){
+throw new Error("Identifiant incorrect");
+}
+
+localStorage.setItem("user_id", data.id);
+
+window.location.href = "home.html";
+
+}catch(err){
+msg.innerText = err.message;
+}
+
+}
+
+</script>
+
+</body>
+</html>

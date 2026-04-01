@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Produits VIP</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+}
+
+.header{
+text-align:center;
+padding:15px;
+font-size:20px;
+color:#ff0000;
+}
+
+/* TOAST */
+.toast{
+position:fixed;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+background:#111;
+color:#fff;
+padding:12px 18px;
+border-radius:10px;
+font-size:14px;
+z-index:9999;
+display:none;
+border:1px solid #333;
+}
+
+/* CONTAINER */
+.container{
+padding:10px;
+margin-bottom:100px;
+}
+
+/* CARD */
+.card{
+background:#111;
+border-radius:18px;
+padding:12px;
+margin-bottom:15px;
+border:1px solid #222;
+}
+
+/* TOP LAYOUT */
+.top{
+display:flex;
+gap:12px;
+align-items:center;
+}
+
+.vip-img{
+width:110px;
+height:110px;
+border-radius:14px;
+object-fit:cover;
+border:1px solid #333;
+}
+
+.vip-info{
+flex:1;
+}
+
+.vip-name{
+color:#ff0000;
+font-weight:bold;
+font-size:18px;
+}
+
+.vip-text{
+font-size:15px;
+color:#ccc;
+margin-top:6px;
+}
+
+/* BUTTON */
+.btn{
+margin-top:12px;
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#ff0000;
+color:#fff;
+font-size:15px;
+cursor:pointer;
+}
+
+.btn:disabled{
+background:#555;
+cursor:not-allowed;
+}
+
+/* MENU */
+.menu{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+align-items:center;
+padding:14px 0;
+border-top:1px solid #222;
+}
+
+.menu-item{
+text-align:center;
+font-size:14px;
+color:#777;
+flex:1;
+cursor:pointer;
+}
+
+.menu-item div{
+font-size:22px;
+color:#aaa;
+margin-bottom:3px;
+}
+
+.menu-item.active{
+color:#ff0000;
+}
+
+.menu-item.active div{
+color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">Produits VIP</div>
+
+<div id="toast" class="toast"></div>
+
+<div class="container" id="plans"></div>
+
+<!-- MENU -->
+<div class="menu">
+<div class="menu-item" onclick="location.href='home.html'">
+<div>⌂</div>Accueil
+</div>
+
+<div class="menu-item active">
+<div>▣</div>Produit
+</div>
+
+<div class="menu-item" onclick="location.href='wallet.html'">
+<div>◧</div>Portefeuille
+</div>
+
+<div class="menu-item" onclick="location.href='account.html'">
+<div>○</div>Compte
+</div>
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+const images = [
+"images (42).jpeg",
+"images (1).png",
+"images (45).jpeg"
+];
+
+let ownedVIPs = [];
+
+/* TOAST */
+function showToast(msg,type="info"){
+const t = document.getElementById("toast");
+t.innerText = msg;
+t.style.display = "block";
+
+t.style.borderColor =
+type === "success" ? "green" :
+type === "error" ? "red" : "#333";
+
+setTimeout(()=> t.style.display="none", 3000);
+}
+
+/* LOAD VIP ACHETÉS */
+async function loadUserVIPs(user_id){
+
+const { data, error } = await supabaseClient
+.from("user_vips")
+.select("vip_id")
+.eq("user_id", user_id);
+
+if(error){
+console.log(error);
+return;
+}
+
+ownedVIPs = data.map(v => v.vip_id);
+}
+
+/* LOAD PLANS */
+async function loadPlans(){
+
+let user_id = localStorage.getItem("user_id");
+
+if(!user_id){
+showToast("Non connecté","error");
+return;
+}
+
+await loadUserVIPs(user_id);
+
+const { data, error } = await supabaseClient
+.from("vip_plans")
+.select("*")
+.order("price",{ascending:true});
+
+if(error){
+showToast("Erreur chargement","error");
+return;
+}
+
+let container = document.getElementById("plans");
+container.innerHTML = "";
+
+data.forEach((plan,index)=>{
+
+let img = images[index % images.length];
+
+let alreadyOwned = ownedVIPs.includes(plan.id);
+
+let btnText = alreadyOwned ? "Déjà acheté" : "Investir";
+let disabled = alreadyOwned ? "disabled" : "";
+
+let card = document.createElement("div");
+
+card.innerHTML = `
+<div class="card">
+
+<div class="top">
+
+<img src="${img}" class="vip-img">
+
+<div class="vip-info">
+<div class="vip-name">${plan.name}</div>
+<div class="vip-text">Prix : ${plan.price} FCFA</div>
+<div class="vip-text">Gain / jour : ${plan.daily_income}</div>
+<div class="vip-text">Durée : ${plan.cycle_days} jours</div>
+</div>
+
+</div>
+
+<button class="btn" id="btn-${plan.id}" ${disabled}
+onclick="buyVIP('${plan.id}')">
+${btnText}
+</button>
+
+</div>
+`;
+
+container.appendChild(card);
+
+});
+
+}
+
+/* BUY VIP */
+async function buyVIP(vip_id){
+
+let user_id = localStorage.getItem("user_id");
+let btn = document.getElementById("btn-"+vip_id);
+
+if(!user_id){
+showToast("Non connecté","error");
+return;
+}
+
+btn.disabled = true;
+btn.innerText = "Traitement...";
+
+const { data, error } = await supabaseClient.rpc("buy_vip", {
+p_user_id: user_id,
+p_vip_id: vip_id
+});
+
+if(error){
+showToast("Erreur achat","error");
+btn.disabled = false;
+btn.innerText = "Investir";
+return;
+}
+
+// update local
+ownedVIPs.push(vip_id);
+
+btn.innerText = "Déjà acheté";
+btn.style.background = "green";
+
+showToast("Achat réussi", "success");
+
+}
+
+/* INIT */
+loadPlans();
+
+</script>
+
+</body>
+</html>

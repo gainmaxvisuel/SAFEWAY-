@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Informations</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+}
+
+/* HEADER */
+.header{
+display:flex;
+align-items:center;
+gap:10px;
+padding:15px;
+}
+
+.back{
+font-size:22px;
+cursor:pointer;
+color:#ff0000;
+}
+
+.title{
+font-size:18px;
+font-weight:bold;
+}
+
+/* CONTAINER */
+.container{
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+/* CARD */
+.card{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:18px;
+}
+
+/* LABEL */
+.label{
+font-size:13px;
+color:#aaa;
+margin-bottom:5px;
+}
+
+/* VALUE */
+.value{
+font-size:17px;
+font-weight:bold;
+color:#fff;
+word-break:break-all;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+<div class="back" onclick="location.href='account.html'">←</div>
+<div class="title">Mes informations</div>
+</div>
+
+<!-- INFOS -->
+<div class="container">
+
+<div class="card">
+<div class="label">Nom complet</div>
+<div class="value" id="name">...</div>
+</div>
+
+<div class="card">
+<div class="label">Numéro</div>
+<div class="value" id="phone">...</div>
+</div>
+
+<div class="card">
+<div class="label">Code pays</div>
+<div class="value" id="country">...</div>
+</div>
+
+<div class="card">
+<div class="label">Code parrainage</div>
+<div class="value" id="referral">...</div>
+</div>
+
+<div class="card">
+<div class="label">Inscription</div>
+<div class="value" id="date">...</div>
+</div>
+
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+async function loadUser(){
+
+let userId = localStorage.getItem("user_id");
+if(!userId) return;
+
+const { data } = await client
+.from("users")
+.select("*")
+.eq("id", userId)
+.single();
+
+if(data){
+
+document.getElementById("name").innerText = data.full_name;
+
+document.getElementById("phone").innerText =
+data.country_code + " " + data.phone;
+
+document.getElementById("country").innerText =
+data.country_code;
+
+document.getElementById("referral").innerText =
+data.referral_code || "Aucun";
+
+let d = new Date(data.created_at);
+document.getElementById("date").innerText =
+d.toLocaleDateString() + " à " + d.toLocaleTimeString();
+
+}
+
+}
+
+loadUser();
+
+</script>
+
+</body>
+</html>

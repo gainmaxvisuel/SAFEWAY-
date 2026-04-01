@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY-INVEST | Inscription</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+margin:0;
+background:#000;
+color:#fff;
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+.container{
+flex:1;
+display:flex;
+flex-direction:column;
+justify-content:center;
+padding:20px;
+max-width:400px;
+margin:auto;
+width:100%;
+}
+
+/* LOGO */
+.logo{
+text-align:center;
+margin-bottom:20px;
+}
+
+.logo h1{
+color:#ff0000;
+margin:0;
+letter-spacing:2px;
+}
+
+.logo p{
+color:#aaa;
+font-size:14px;
+}
+
+/* INPUT */
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+background:#111;
+border:1px solid #333;
+border-radius:10px;
+color:#fff;
+outline:none;
+}
+
+input:focus{
+border:1px solid #ff0000;
+}
+
+/* DROPDOWN PAYS */
+.dropdown{
+position:relative;
+margin-top:10px;
+}
+
+.dropdown-btn{
+background:#111;
+border:1px solid #333;
+padding:14px;
+border-radius:12px;
+color:#fff;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:pointer;
+transition:0.2s;
+}
+
+.dropdown-btn:hover{
+border:1px solid #ff0000;
+}
+
+.arrow{
+color:#ff0000;
+font-size:12px;
+}
+
+.dropdown-content{
+display:none;
+position:absolute;
+width:100%;
+background:#111;
+border:1px solid #333;
+border-radius:12px;
+margin-top:5px;
+z-index:999;
+max-height:220px;
+overflow-y:auto;
+}
+
+.item{
+padding:12px;
+color:#fff;
+cursor:pointer;
+transition:0.2s;
+border-bottom:1px solid #222;
+}
+
+.item:hover{
+background:#ff0000;
+}
+
+.item:last-child{
+border-bottom:none;
+}
+
+/* BUTTON */
+button{
+width:100%;
+padding:14px;
+margin-top:20px;
+background:#ff0000;
+border:none;
+border-radius:10px;
+font-weight:bold;
+color:#fff;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+background:#cc0000;
+}
+
+/* ERROR */
+.error{
+color:#ff4d4d;
+font-size:13px;
+text-align:center;
+margin-top:5px;
+}
+
+/* LINK */
+.link{
+text-align:center;
+margin-top:10px;
+}
+
+.link a{
+color:#ff0000;
+text-decoration:none;
+font-weight:bold;
+}
+
+/* POPUP */
+.popup{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.95);
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+.popup-box{
+background:#111;
+padding:25px;
+border-radius:12px;
+text-align:center;
+width:90%;
+max-width:300px;
+border:1px solid #ff0000;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+<h1>SAFEWAY</h1>
+<p>Investissez dans l'avenir</p>
+</div>
+
+<h2>Créer un compte</h2>
+
+<input id="name" placeholder="Nom complet">
+
+<!-- DROPDOWN PAYS -->
+<div class="dropdown">
+<div class="dropdown-btn" onclick="toggleDropdown()">
+<span id="selectedCountry">Choisir un pays</span>
+<span class="arrow">▼</span>
+</div>
+
+<div class="dropdown-content" id="dropdownList">
+<div class="item" onclick="selectCountry('+226','Burkina Faso')">🇧🇫 Burkina Faso (+226)</div>
+<div class="item" onclick="selectCountry('+223','Mali')">🇲🇱 Mali (+223)</div>
+<div class="item" onclick="selectCountry('+229','Bénin')">🇧🇯 Bénin (+229)</div>
+<div class="item" onclick="selectCountry('+228','Togo')">🇹🇬 Togo (+228)</div>
+<div class="item" onclick="selectCountry('+225','Côte d’Ivoire')">🇨🇮 Côte d’Ivoire (+225)</div>
+<div class="item" onclick="selectCountry('+237','Cameroun')">🇨🇲 Cameroun (+237)</div>
+</div>
+</div>
+
+<input id="phone" placeholder="Numéro de téléphone">
+
+<input type="password" id="pass" placeholder="Mot de passe">
+
+<input type="password" id="confirm" placeholder="Confirmer mot de passe">
+
+<input id="referral" placeholder="Code parrain (optionnel)">
+
+<div class="error" id="msg"></div>
+
+<button id="btn" onclick="register()">Créer un compte</button>
+
+<!-- 🔥 LIEN AJOUTÉ -->
+<div class="link">
+Déjà un compte ?
+<a href="login.html">Connexion</a>
+</div>
+
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h2 style="color:#ff0000;">🎉 Succès</h2>
+<p>Compte créé avec succès commencez a investir 
+SAFEWAY PLATEFORME DURABLE </p>
+<button onclick="goHome()">Continuer</button>
+</div>
+</div>
+
+<script>
+
+const { createClient } = supabase;
+
+const client = createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let selectedCountryCode = "";
+
+function toggleDropdown(){
+let list = document.getElementById("dropdownList");
+list.style.display = list.style.display === "block" ? "none" : "block";
+}
+
+function selectCountry(code, name){
+selectedCountryCode = code;
+document.getElementById("selectedCountry").innerText = name + " (" + code + ")";
+document.getElementById("dropdownList").style.display = "none";
+}
+
+async function register(){
+
+let name = document.getElementById("name").value;
+let phone = document.getElementById("phone").value;
+let pass = document.getElementById("pass").value;
+let confirm = document.getElementById("confirm").value;
+let referral = document.getElementById("referral").value;
+
+let msg = document.getElementById("msg");
+let btn = document.getElementById("btn");
+
+msg.innerText = "";
+
+/* VALIDATION */
+if(!name || !selectedCountryCode || !phone || !pass){
+msg.innerText = "Remplis tous les champs";
+return;
+}
+
+if(pass !== confirm){
+msg.innerText = "Les mots de passe ne correspondent pas";
+return;
+}
+
+btn.disabled = true;
+btn.innerText = "Création...";
+
+try{
+
+const { data, error } = await client.rpc("register_user", {
+p_full_name: name,
+p_country_code: selectedCountryCode,
+p_phone: phone,
+p_password: pass,
+p_referral_code: referral || null
+});
+
+if(error) throw error;
+
+document.getElementById("popup").style.display = "flex";
+
+}catch(err){
+msg.innerText = err.message;
+btn.disabled = false;
+btn.innerText = "Créer un compte";
+}
+
+}
+
+function goHome(){
+window.location.href = "home.html";
+}
+
+</script>
+
+</body>
+</html>

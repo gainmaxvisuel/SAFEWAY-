@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Compte</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0b0b0b;
+font-family:Arial;
+color:#fff;
+}
+
+/* PROFILE */
+.profile{
+text-align:center;
+padding:35px 20px 15px;
+}
+
+.avatar{
+width:130px;
+height:130px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid #ff0000;
+margin-bottom:15px;
+}
+
+.phone{
+font-size:20px;
+font-weight:bold;
+}
+
+.name{
+font-size:14px;
+color:#aaa;
+margin-top:5px;
+}
+
+/* MENU */
+.menu-list{
+padding:20px;
+display:flex;
+flex-direction:column;
+gap:18px;
+}
+
+/* BUTTON CARD */
+.item{
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:22px;
+font-size:17px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:pointer;
+}
+
+.item span{
+color:#ff0000;
+font-size:20px;
+}
+
+/* LOGOUT */
+.logout{
+background:#5a1a1a;
+border:1px solid #ff0000;
+color:#ff4444;
+font-weight:bold;
+}
+
+/* MENU FIXE */
+.menu{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+padding:14px 0;
+border-top:1px solid #222;
+}
+
+.menu-item{
+text-align:center;
+font-size:14px;
+color:#777;
+flex:1;
+cursor:pointer;
+}
+
+.menu-item div{
+font-size:22px;
+margin-bottom:3px;
+color:#aaa;
+}
+
+.menu-item.active{
+color:#ff0000;
+}
+
+.menu-item.active div{
+color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- PROFILE -->
+<div class="profile">
+<img id="avatar" class="avatar" src="">
+<div class="phone" id="phone">...</div>
+<div class="name" id="name"></div>
+</div>
+
+<!-- MENU LIST -->
+<div class="menu-list">
+
+<div class="item" onclick="location.href='products.html'">
+Mon produit <span>›</span>
+</div>
+
+<div class="item" onclick="location.href='team.html'">
+Inviter des amis <span>›</span>
+</div>
+
+<div class="item" onclick="location.href='info.html'">
+Mes informations <span>›</span>
+</div>
+
+<!-- 🔥 AJOUT TELEGRAM -->
+<div class="item" onclick="window.open('https://t.me/safewayinvest11', '_blank')">
+Canal Telegram <span>›</span>
+</div>
+
+<div class="item" onclick="window.open('https://t.me/+VoK1oycgAmNhNTNk', '_blank')">
+Groupe Telegram <span>›</span>
+</div>
+
+<div class="item logout" onclick="logout()">
+Déconnexion <span>×</span>
+</div>
+
+</div>
+
+<!-- MENU FIXE -->
+<div class="menu">
+
+<div class="menu-item" onclick="location.href='home.html'">
+<div>⌂</div>Accueil
+</div>
+
+<div class="menu-item" onclick="location.href='product.html'">
+<div>▣</div>Produit
+</div>
+
+<div class="menu-item" onclick="location.href='wallet.html'">
+<div>◧</div>Portefeuille
+</div>
+
+<div class="menu-item active">
+<div>○</div>Compte
+</div>
+
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+async function loadUser(){
+
+let userId = localStorage.getItem("user_id");
+if(!userId) return;
+
+const { data } = await client
+.from("users")
+.select("full_name, phone, country_code")
+.eq("id", userId)
+.single();
+
+if(data){
+
+document.getElementById("phone").innerText =
+data.country_code + " " + data.phone;
+
+document.getElementById("name").innerText =
+data.full_name;
+
+let name = data.full_name.toLowerCase();
+
+let femaleNames = [
+"mariam","fatou","aicha","aminata","sarah","safia","awa","rose","jeanne","khadija"
+];
+
+let avatar = document.getElementById("avatar");
+
+let isFemale = femaleNames.some(n => name.includes(n));
+
+if(isFemale){
+avatar.src = "https://randomuser.me/api/portraits/women/44.jpg";
+}else{
+avatar.src = "https://randomuser.me/api/portraits/men/45.jpg";
+}
+
+}
+
+}
+
+function logout(){
+localStorage.removeItem("user_id");
+location.href = "login.html";
+}
+
+loadUser();
+
+</script>
+
+</body>
+</html>
