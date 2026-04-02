@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retrait</title><script src="https://unpkg.com/@supabase/supabase-js@2"></script><style>
+body{
+margin:0;
+background:#0a0a0a;
+color:#fff;
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.container{
+width:100%;
+max-width:420px;
+padding:20px;
+position:relative;
+}
+
+.back-btn{
+position:absolute;
+top:10px;
+left:10px;
+font-size:24px;
+color:#fff;
+cursor:pointer;
+}
+
+h2{
+text-align:center;
+color:#ff0000;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+border-radius:10px;
+border:1px solid #222;
+background:#111;
+color:#fff;
+outline:none;
+}
+
+/* INFO BOX */
+.calc-box{
+margin-top:10px;
+background:#111;
+border:1px solid #222;
+border-radius:10px;
+padding:12px;
+}
+
+.calc-item{
+display:flex;
+justify-content:space-between;
+margin:5px 0;
+font-size:14px;
+}
+
+.calc-fee{
+color:#ff4d4d;
+}
+
+.calc-net{
+color:#00ff88;
+font-weight:bold;
+}
+
+.dropdown-btn{
+margin-top:10px;
+padding:14px;
+background:#111;
+border:1px solid #222;
+border-radius:10px;
+cursor:pointer;
+display:flex;
+justify-content:space-between;
+}
+
+.dropdown-list{
+display:none;
+background:#111;
+border:1px solid #222;
+border-radius:10px;
+margin-top:5px;
+max-height:200px;
+overflow:auto;
+}
+
+.item, .operator-item{
+padding:12px;
+border-bottom:1px solid #222;
+cursor:pointer;
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.operator-item img{
+width:28px;
+height:28px;
+border-radius:50%;
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:20px;
+border:none;
+border-radius:10px;
+background:#ff0000;
+color:#fff;
+font-weight:bold;
+cursor:pointer;
+}
+
+.error{
+color:red;
+text-align:center;
+margin-top:10px;
+}
+</style></head><body><div class="container"><div class="back-btn" onclick="goBack()">←</div><h2>💸 Retrait</h2><!-- PAYS --><div>
+<div class="dropdown-btn" onclick="toggleCountries()">
+<span id="countryText">Choisir pays</span>
+<span>▼</span>
+</div><div class="dropdown-list" id="countryList">
+<div class="item" onclick="setCountry('+225')">🇨🇮 Côte d'Ivoire</div>
+<div class="item" onclick="setCountry('+226')">🇧🇫 Burkina Faso</div>
+<div class="item" onclick="setCountry('+223')">🇲🇱 Mali</div>
+<div class="item" onclick="setCountry('+227')">🇳🇪 Niger</div>
+<div class="item" onclick="setCountry('+228')">🇹🇬 Togo</div>
+<div class="item" onclick="setCountry('+229')">🇧🇯 Bénin</div>
+<div class="item" onclick="setCountry('+237')">🇨🇲 Cameroun</div>
+<div class="item" onclick="setCountry('+221')">🇸🇳 Sénégal</div>
+</div>
+</div><!-- OPERATEURS --><div class="dropdown-btn" onclick="showOperators()">
+<span id="operatorText">Choisir opérateur</span>
+<span>▼</span>
+</div><div class="dropdown-list" id="operatorList"></div><input id="phone" placeholder="Numéro">
+<input id="amount" placeholder="Montant"><!-- CALCUL --><div class="calc-box" id="calcBox" style="display:none;">
+<div class="calc-item">
+<span>Frais (7%)</span>
+<span class="calc-fee" id="feeText">0 XOF</span>
+</div>
+<div class="calc-item">
+<span>Montant à recevoir</span>
+<span class="calc-net" id="netText">0 XOF</span>
+</div>
+</div><div class="error" id="error"></div><button onclick="sendWithdrawal()">Valider retrait</button>
+
+</div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let countryCode = "";
+let selectedOperator = "";
+
+/* OPERATEURS */
+const operators = [
+{name:"Orange Money", logo:"https://upload.wikimedia.org/wikipedia/commons/6/6f/Orange_logo.svg"},
+{name:"MTN Mobile Money", logo:"https://upload.wikimedia.org/wikipedia/commons/9/93/MTN_Logo.svg"},
+{name:"Moov Money", logo:"https://upload.wikimedia.org/wikipedia/commons/4/4f/Moov_Africa_logo.png"},
+{name:"Wave", logo:"https://wave.com/logo.png"},
+{name:"TMoney", logo:"https://via.placeholder.com/30"}
+];
+
+/* BACK */
+function goBack(){
+window.location.href = "wallet.html";
+}
+
+/* PAYS */
+function toggleCountries(){
+let el = document.getElementById("countryList");
+el.style.display = el.style.display === "block" ? "none":"block";
+}
+
+function setCountry(code){
+countryCode = code;
+document.getElementById("countryText").innerText = code;
+document.getElementById("countryList").style.display = "none";
+}
+
+/* OPERATEURS */
+function showOperators(){
+let list = document.getElementById("operatorList");
+list.innerHTML = "";
+
+operators.forEach(op=>{
+let div = document.createElement("div");
+div.className = "operator-item";
+
+div.innerHTML = `
+<img src="${op.logo}">
+<span>${op.name}</span>
+`;
+
+div.onclick = ()=>{
+selectedOperator = op.name;
+
+document.getElementById("operatorText").innerHTML = `
+<img src="${op.logo}" style="width:20px;height:20px;border-radius:50%">
+${op.name}
+`;
+
+list.style.display = "none";
+};
+
+list.appendChild(div);
+});
+
+list.style.display = "block";
+}
+
+/* CALCUL FRAIS */
+document.getElementById("amount").addEventListener("input", function(){
+
+let amount = parseInt(this.value);
+
+if(!amount || amount <= 0){
+document.getElementById("calcBox").style.display = "none";
+return;
+}
+
+let fee = Math.floor(amount * 0.07);
+let net = amount - fee;
+
+document.getElementById("feeText").innerText = fee + " XOF";
+document.getElementById("netText").innerText = net + " XOF";
+
+document.getElementById("calcBox").style.display = "block";
+
+});
+
+/* CHECK DEPOT */
+async function checkDeposit(user_id){
+
+const { data } = await supabaseClient
+.from("deposits")
+.select("*")
+.eq("user_id", user_id)
+.eq("status","approved
