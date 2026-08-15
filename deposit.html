@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFEWAY - Dépôt</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+margin:0;
+background:#000;
+color:#fff;
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+.container{
+flex:1;
+display:flex;
+flex-direction:column;
+justify-content:center;
+padding:20px;
+max-width:400px;
+margin:auto;
+width:100%;
+}
+
+h2{
+text-align:center;
+color:#ff0000;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+background:#111;
+border:1px solid #333;
+border-radius:10px;
+color:#fff;
+outline:none;
+}
+
+input:focus{
+border:1px solid #ff0000;
+}
+
+.dropdown{
+position:relative;
+margin-top:10px;
+}
+
+.dropdown-btn{
+background:#111;
+border:1px solid #333;
+padding:14px;
+border-radius:12px;
+color:#fff;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:pointer;
+}
+
+.dropdown-content{
+display:none;
+position:absolute;
+width:100%;
+background:#111;
+border:1px solid #333;
+border-radius:12px;
+margin-top:5px;
+z-index:999;
+max-height:220px;
+overflow-y:auto;
+}
+
+.item{
+padding:12px;
+cursor:pointer;
+border-bottom:1px solid #222;
+}
+
+.item:hover{
+background:#ff0000;
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:20px;
+background:#ff0000;
+border:none;
+border-radius:10px;
+font-weight:bold;
+color:#fff;
+cursor:pointer;
+}
+
+button:hover{
+background:#cc0000;
+}
+
+.error{
+color:#ff4d4d;
+font-size:13px;
+text-align:center;
+margin-top:10px;
+}
+
+.popup{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.95);
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+.popup-box{
+background:#111;
+padding:25px;
+border-radius:12px;
+text-align:center;
+border:1px solid #ff0000;
+}
+
+.hidden {
+display: none;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>💰 Dépôt SAFEWAY</h2>
+
+<!-- ÉTAPE 1 : FORMULAIRE DE DEPÔT -->
+<div id="step1-form">
+<!-- PAYS -->
+<div class="dropdown">
+<div class="dropdown-btn" onclick="toggleDropdown()">
+<span id="selectedCountry">Choisir un pays</span>
+<span>▼</span>
+</div>
+
+<div class="dropdown-content" id="dropdownList">
+<div class="item" onclick="selectCountry('+226')">Burkina Faso</div>
+<div class="item" onclick="selectCountry('+223')">Mali</div>
+<div class="item" onclick="selectCountry('+227')">Niger</div>
+<div class="item" onclick="selectCountry('+228')">Togo</div>
+<div class="item" onclick="selectCountry('+229')">Bénin</div>
+<div class="item" onclick="selectCountry('+225')">Côte d’Ivoire</div>
+<div class="item" onclick="selectCountry('+237')">Cameroun</div>
+<div class="item" onclick="selectCountry('+221')">Sénégal</div>
+</div>
+</div>
+
+<!-- PHONE -->
+<input id="phone" placeholder="Numéro de téléphone">
+
+<!-- AMOUNT -->
+<input id="amount" placeholder="Montant dépôt" type="number">
+
+<div class="error" id="msg"></div>
+
+<button id="btn" onclick="initiateDeposit()">Valider le dépôt</button>
+</div>
+
+<!-- ÉTAPE 2 : ACTION DE PAIEMENT & OTP (Caché au début) -->
+<div id="step2-payment" class="hidden">
+<p style="text-align:center; color:#ccc;">Code USSD généré :</p>
+<input id="ussdDisplay" readonly style="text-align:center; font-weight:bold; font-size:18px; color:#0ff;">
+
+<!-- Bouton pour ouvrir la cabine téléphonique -->
+<a id="callBtn" href="#" style="text-decoration:none;">
+<button type="button" style="background:#008000;">📞 Aller au paiement</button>
+</a>
+
+<p style="text-align:center; margin-top:20px; font-size:14px;">Une fois le paiement effectué, saisissez le code OTP reçu par SMS :</p>
+<input id="otpInput" placeholder="Saisir le code OTP">
+
+<button id="verifyBtn" onclick="verifyOtp()">Confirmer l'OTP</button>
+</div>
+
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h2 style="color:#ff0000;">✔ Succès</h2>
+<p>Dépôt validé avec succès !</p>
+</div>
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://ycswpdydsgoqplkqtpsd.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljc3dwZHlkc2dvcXBsa3F0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjY4MTcsImV4cCI6MjA5MDU0MjgxN30.67bBMdHtcGFIJuZuY_Xd4hBN4hj86JjHVXGN3oPbKMA"
+);
+
+let selectedCountryCode = "";
+let currentDepositId = null;
+
+function toggleDropdown(){
+let list = document.getElementById("dropdownList");
+list.style.display = list.style.display === "block" ? "none" : "block";
+}
+
+function selectCountry(code){
+selectedCountryCode = code;
+document.getElementById("selectedCountry").innerText = code;
+document.getElementById("dropdownList").style.display = "none";
+}
+
+async function initiateDeposit(){
+let user_id = localStorage.getItem("user_id");
+let phone = document.getElementById("phone").value;
+let amount = parseInt(document.getElementById("amount").value);
+let msg = document.getElementById("msg");
+let btn = document.getElementById("btn");
+
+msg.innerText = "";
+
+if(!user_id){
+msg.innerText = "Utilisateur non connecté";
+return;
+}
+
+if(!selectedCountryCode || !phone || !amount){
+msg.innerText = "Remplis tous les champs";
+return;
+}
+
+btn.disabled = true;
+btn.innerText = "Génération...";
+
+let full_phone = selectedCountryCode + phone;
+// Construction dynamique du code USSD avec le montant
+let ussdCode = `*144*4*6*${amount}#`;
+
+try{
+// Appel de la fonction SQL ou insertion directe (selon votre structure)
+// Ici on simule l'appel RPC ou l'insertion qui retourne l'id du dépôt créé
+const { data, error } = await client.rpc("create_deposit", {
+  p_user_id: user_id,
+  p_country_code: selectedCountryCode,
+  p_phone: full_phone,
+  p_amount: amount
+}).select(); // Assurez-vous que votre fonction retourne l'ID ou l'enregistrement
+
+// Si vous utilisez une insertion classique à la place de .rpc, adaptez ici.
+// Pour l'exemple, on bascule vers l'étape 2 :
+
+document.getElementById("ussdDisplay").value = ussdCode;
+// Le lien tel: gère l'appel du code USSD sur mobile (le %23 correspond au symbole # encodé pour les liens URL)
+let encodedUssd = ussdCode.replace('#', '%23');
+document.getElementById("callBtn").href = `tel:${encodedUssd}`;
+
+// Passage visuel à l'étape 2
+document.getElementById("step1-form").classList.add("hidden");
+document.getElementById("step2-payment").classList.remove("hidden");
+
+}catch(err){
+msg.innerText = err.message;
+btn.disabled = false;
+btn.innerText = "Valider le dépôt";
+}
+}
+
+async function verifyOtp(){
+let otp = document.getElementById("otpInput").value;
+let msg = document.getElementById("msg");
+
+if(!otp){
+alert("Veuillez saisir le code OTP");
+return;
+}
+
+try {
+// Mettre à jour le dépôt avec l'OTP ou valider la transaction côté base de données
+/* 
+  Exemple de mise à jour dans Supabase :
+  await client.from('deposits').update({ otp_code: otp, status: 'completed' }).eq('id', currentDepositId);
+*/
+
+// Affichage du popup de succès
+document.getElementById("popup").style.display = "flex";
+
+setTimeout(()=>{
+window.location.href = "https://leekpay.me/safeway-depot";
+},1500);
+
+} catch (err) {
+alert("Erreur: " + err.message);
+}
+}
+
+</script>
+
+</body>
+  </html>
+  
